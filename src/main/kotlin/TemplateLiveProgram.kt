@@ -1,11 +1,9 @@
 import org.openrndr.application
 import org.openrndr.color.ColorRGBa
+import org.openrndr.extra.color.presets.DARK_GRAY
 import org.openrndr.extra.color.presets.LIGHT_GRAY
 import org.openrndr.extra.olive.oliveProgram
 import org.openrndr.math.Vector2
-import java.lang.Math.random
-import kotlin.math.nextDown
-import kotlin.math.nextUp
 import kotlin.math.roundToInt
 import kotlin.random.Random
 
@@ -19,6 +17,7 @@ import kotlin.random.Random
 
 const val screenWidth: Double = 400.0
 const val screenHeight: Double = 400.0
+const val margin: Double = 40.0
 
 
 fun main() = application {
@@ -36,10 +35,8 @@ fun main() = application {
         extend {
             drawer.clear(backgroundColour)
 
-            val circleCentres = mutableListOf<Vector2>()
-            circles.forEach { circleCentres.add(Vector2(it.x, it.y)) }
             drawer.stroke = lineColour
-            drawer.lineLoop(circleCentres)
+            drawer.lineSegments(getLineSegments(circles))
 
             circles.forEach {
                 drawer.fill = it.colour
@@ -54,8 +51,6 @@ fun main() = application {
 
 
 fun updateCircle(circle: Circle) {
-    val stepChoices = listOf(-1.0, 1.0)
-
     // update growing/shrinking behaviour
     if (circle.radius >= circle.radiusMax) {
         circle.isRadiusGrowing = false
@@ -78,47 +73,74 @@ fun updateCircle(circle: Circle) {
         circle.isYGrowing = Random.nextBoolean()
     }
 
+    if (circle.x !in margin..screenWidth - margin) {
+        circle.isXGrowing = !circle.isXGrowing
+    }
+    if (circle.isXGrowing) {
+        circle.x += circle.xStep
+    } else {
+        circle.x -= circle.xStep
+    }
 
-    if (circle.x <= 0) {
-        circle.x = random().nextUp()
-    } else if (circle.x >= screenWidth) {
-        circle.x = random().nextDown()
-    } else circle.x += circle.xStep * stepChoices[Random.nextInt(stepChoices.size)]
 
-    // update y coordinate
-    if (circle.y <= 0) {
-        circle.y = random().nextUp()
-    } else if (circle.y >= screenHeight) {
-        circle.y = random().nextDown()
-    } else circle.y += circle.yStep * stepChoices[Random.nextInt(stepChoices.size)]
+    if (circle.y !in margin..screenHeight - margin) {
+        circle.isYGrowing = !circle.isYGrowing
+    }
+    if (circle.isYGrowing) {
+        circle.y += circle.yStep
+    } else {
+        circle.y -= circle.yStep
+    }
+
+
+    circle.inertia -= 1
 }
 
 
 fun createCircles(): List<Circle> {
     return listOf(
         Circle(
-            x = Random.nextDouble(screenWidth),
-            y = Random.nextDouble(screenHeight)
+            x = Random.nextDouble(margin, screenWidth - margin),
+            y = Random.nextDouble(margin, screenHeight - margin)
         ),
 
         Circle(
-            x = Random.nextDouble(screenWidth),
-            y = Random.nextDouble(screenHeight),
-            radiusMax = 15.0,
+            x = Random.nextDouble(margin, screenWidth - margin),
+            y = Random.nextDouble(margin, screenHeight - margin),
+            radiusMax = 10.0,
             colour = ColorRGBa.WHITE
         ),
 
         Circle(
-            x = Random.nextDouble(screenWidth),
-            y = Random.nextDouble(screenHeight),
-            radiusMax = 20.0,
+            x = Random.nextDouble(margin, screenWidth - margin),
+            y = Random.nextDouble(margin, screenHeight - margin),
+            radiusMax = 8.0,
             colour = ColorRGBa.PINK,
         ),
 
         Circle(
-            x = Random.nextDouble(screenWidth),
-            y = Random.nextDouble(screenHeight),
+            x = Random.nextDouble(margin, screenWidth - margin),
+            y = Random.nextDouble(margin, screenHeight - margin),
             colour = ColorRGBa.LIGHT_GRAY,
         ),
+        Circle(
+            x = Random.nextDouble(margin, screenWidth - margin),
+            y = Random.nextDouble(margin, screenHeight - margin),
+            colour = ColorRGBa.DARK_GRAY,
+        ),
     )
+}
+
+fun getLineSegments(circles: Collection<Circle>): MutableList<Vector2> {
+    val circleCentres = mutableListOf<Vector2>()
+    circles.forEach { circleCentres.add(Vector2(it.x, it.y)) }
+
+    val lineLoopSegments = mutableListOf<Vector2>()
+    circleCentres.forEachIndexed { index, it ->
+        for (i in 0 until index) {
+            lineLoopSegments.add(Vector2(circleCentres[i].x, circleCentres[i].y))
+            lineLoopSegments.add(Vector2(it.x, it.y))
+        }
+    }
+    return lineLoopSegments
 }
