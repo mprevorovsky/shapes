@@ -1,50 +1,51 @@
 import org.openrndr.application
 import org.openrndr.color.ColorRGBa
-import org.openrndr.extra.color.presets.DARK_GRAY
-import org.openrndr.extra.color.presets.LIGHT_GRAY
+import org.openrndr.extra.noise.random
 import org.openrndr.extra.olive.oliveProgram
 import kotlin.math.roundToInt
-import kotlin.random.Random
 
-
-/**
- *  All code inside the oliveProgram {} can be changed
- *  while the program is running.
- */
 
 const val screenWidth: Double = 800.0
 const val screenHeight: Double = 800.0
 const val margin: Double = 40.0
 const val sleepTime: Long = 100
 val backgroundColour = ColorRGBa.BLACK
-val lineColour = ColorRGBa.GRAY
 
+/**
+ *  All code inside the oliveProgram {} can be changed
+ *  while the program is running.
+ */
 
 fun main() = application {
     configure {
-        width = screenWidth.roundToInt()
+        width =  screenWidth.roundToInt()
         height = screenHeight.roundToInt()
     }
     oliveProgram {
-        val circles1 = createCircles(5)
-        val circles2 = createCircles(4)
+        val circleGroups = listOf(
+            MutableList(5) { Circle(colour = ColorRGBa.GRAY, radiusMax = random(1.0, 5.0)) },
+            MutableList(5) { Circle(colour = ColorRGBa.CYAN, radiusMax = random(1.0, 5.0)) },
+            MutableList(6) { Circle(colour = ColorRGBa.PINK, radiusMax = random(1.0, 5.0)) },
+        )
 
         extend {
             drawer.clear(backgroundColour)
 
-            drawer.stroke = lineColour
-            drawer.lineSegments(circles1.getLineSegments())
-            drawer.lineSegments(circles2.getLineSegments())
-
-            circles1.circles.forEach() {
-                drawer.fill = it.colour
-                drawer.circle(it.x, it.y, it.radius)
-                updateCircle(it)
+            // draw lines
+            val lineColours = listOf(ColorRGBa.GRAY, ColorRGBa.CYAN, ColorRGBa.PINK)
+            circleGroups.forEachIndexed { index, it ->
+                drawer.stroke = lineColours[index]
+                drawer.lineSegments(it.getLineSegments())
             }
-            circles2.circles.forEach() {
-                drawer.fill = it.colour
-                drawer.circle(it.x, it.y, it.radius)
-                updateCircle(it)
+
+            // draw circles and update their state for next round
+            circleGroups.forEach { group ->
+                group.forEach {circle ->
+                    drawer.stroke = circle.colour
+                    drawer.fill = circle.colour
+                    drawer.circle(circle.x, circle.y, circle.radius)
+                    circle.update()
+                }
             }
 
             Thread.sleep(sleepTime)
@@ -53,58 +54,13 @@ fun main() = application {
 }
 
 
-fun updateCircle(circle: Circle) {
-    // update growing/shrinking behaviour
-    if (circle.radius >= circle.radiusMax) {
-        circle.isRadiusGrowing = false
-    }
-    if (circle.radius <= circle.radiusMin) {
-        circle.isRadiusGrowing = true
-    }
-
-    // update radius
-    if (circle.isRadiusGrowing) {
-        circle.radius += circle.radiusStep
-    } else {
-        circle.radius -= circle.radiusStep
-    }
-
-    // update x, y coordinates
-    if (circle.inertiaCounter == 0) {
-        circle.inertiaCounter = circle.inertiaMax
-        circle.isXGrowing = Random.nextBoolean()
-        circle.isYGrowing = Random.nextBoolean()
-    }
-
-    if (circle.x !in margin..screenWidth - margin) {
-        circle.isXGrowing = !circle.isXGrowing
-    }
-    if (circle.isXGrowing) {
-        circle.x += circle.xStep
-    } else {
-        circle.x -= circle.xStep
-    }
-
-    if (circle.y !in margin..screenHeight - margin) {
-        circle.isYGrowing = !circle.isYGrowing
-    }
-    if (circle.isYGrowing) {
-        circle.y += circle.yStep
-    } else {
-        circle.y -= circle.yStep
-    }
-
-    circle.inertiaCounter -= 1
-}
-
-
-fun createCircles(numberOfCircles: Int): Circles {
+fun createCircles(numberOfCircles: Int): MutableList<Circle> {
     val circles = mutableListOf<Circle>()
         for (i in 1..numberOfCircles) {
             circles.add(Circle())
         }
 
-    return Circles(circles)
+    return circles
 }
 
 
