@@ -4,6 +4,7 @@ Inspired by the background used by Dave Farley in some of his Continuous Deliver
 
 
 <br>
+<img src=shapes.png width=400>
 <br>
 
 
