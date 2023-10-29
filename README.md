@@ -1,4 +1,13 @@
-# OPENRNDR template project
+Draws dynamically changing polyhedrons / networks of connected circles using the OPENRNDR library (https://openrndr.org/).
+
+Inspired by the background used by Dave Farley in some of his Continuous Delivery videos (https://www.youtube.com/@ContinuousDelivery).
+
+
+
+
+
+
+## OPENRNDR template project
 
 A feature rich template for creating OPENRNDR programs based on [Gradle/Kts](https://en.wikipedia.org/wiki/Gradle).
 
